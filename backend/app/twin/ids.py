@@ -51,3 +51,91 @@ def generate_batch_id() -> str:
     """
     chars = string.ascii_uppercase + string.digits
     return "".join(secrets.choice(chars) for _ in range(13))
+
+
+
+def generate_authorization_id() -> str:
+    """Generate a PayPal-style authorization ID.
+    
+    Format: 17 uppercase alphanumeric chars (same as order ID format)
+    
+    Returns:
+        Authorization ID
+    """
+    chars = string.ascii_uppercase + string.digits
+    return "".join(secrets.choice(chars) for _ in range(17))
+
+
+def generate_capture_id() -> str:
+    """Generate a PayPal-style capture ID.
+    
+    Format: 17 uppercase alphanumeric chars (same as order ID format)
+    
+    Returns:
+        Capture ID
+    """
+    chars = string.ascii_uppercase + string.digits
+    return "".join(secrets.choice(chars) for _ in range(17))
+
+
+def generate_refund_id() -> str:
+    """Generate a PayPal-style refund ID.
+    
+    Format: 17 uppercase alphanumeric chars (same as order ID format)
+    
+    Returns:
+        Refund ID
+    """
+    chars = string.ascii_uppercase + string.digits
+    return "".join(secrets.choice(chars) for _ in range(17))
+
+
+def generate_payout_item_id() -> str:
+    """Generate a PayPal-style payout item ID.
+    
+    Format: 18-20 uppercase alphanumeric chars
+    
+    Returns:
+        Payout item ID
+    """
+    chars = string.ascii_uppercase + string.digits
+    return "".join(secrets.choice(chars) for _ in range(18))
+
+
+def generate_plan_id() -> str:
+    """Generate a PayPal-style billing plan ID.
+    
+    Format: 3-character 'P-' prefix plus 12-16 uppercase alphanumeric chars
+    
+    Returns:
+        Plan ID like 'P-ABC123XYZ'
+    """
+    chars = string.ascii_uppercase + string.digits
+    suffix = "".join(secrets.choice(chars) for _ in range(15))
+    return f"P-{suffix}"
+
+
+def generate_subscription_id() -> str:
+    """Generate a PayPal-style subscription ID.
+    
+    Format: 2-character 'I-' prefix plus 15-17 uppercase alphanumeric chars
+    
+    Returns:
+        Subscription ID like 'I-ABC123XYZ'
+    """
+    chars = string.ascii_uppercase + string.digits
+    suffix = "".join(secrets.choice(chars) for _ in range(16))
+    return f"I-{suffix}"
+
+
+def generate_product_id() -> str:
+    """Generate a PayPal-style product ID.
+    
+    Format: 3-character 'PROD' prefix plus 12-16 uppercase alphanumeric chars
+    
+    Returns:
+        Product ID like 'PROD-ABC123XYZ'
+    """
+    chars = string.ascii_uppercase + string.digits
+    suffix = "".join(secrets.choice(chars) for _ in range(15))
+    return f"PROD-{suffix}"

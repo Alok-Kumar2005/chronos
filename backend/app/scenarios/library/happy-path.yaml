@@ -1,0 +1,63 @@
+# Happy path scenario - all invariants should pass
+
+id: happy-path
+title: "Happy Path: Successful Order and Payout"
+description: |
+  A baseline scenario that exercises the happy path: place an order, approve it,
+  ship it, process payout, and claim the funds. All invariants should pass.
+  This scenario should pass with both buggy and reference_fix handlers.
+
+tags:
+  - baseline
+  - happy-path
+  - payment
+  - payout
+
+steps:
+  # Initial snapshot
+  - type: snapshot
+    label: "start"
+
+  # Place order
+  - type: place_order
+    product_id: "PROD-BASIC"
+    payer_email: "customer@example.com"
+    quantity: 1
+
+  # Approve order
+  - type: approve_order
+    order_id: "order-1"
+
+  # Ship order (capture funds)
+  - type: ship_order
+    order_id: "order-1"
+
+  # Advance time by 1 week
+  - type: advance
+    days: 7
+
+  # Run weekly payout
+  - type: run_payout
+
+  # Advance time to allow payout to process
+  - type: advance
+    hours: 1
+
+  # Claim payout (creator registration)
+  - type: claim_payout
+    recipient_email: "creator@example.com"
+
+  # Final invariant check
+  - type: check
+    invariant_ids:
+      - "INV-1"
+      - "INV-2"
+      - "INV-3"
+      - "INV-4"
+      - "INV-5"
+      - "INV-6"
+      - "INV-7"
+
+  # Final snapshot
+  - type: snapshot
+    label: "end"

@@ -6,11 +6,12 @@ from collections.abc import AsyncGenerator
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import text
+from sqlalchemy import text, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.config import settings
 from app.main import create_app
+from app.models import Universe
 
 # Set Windows event loop policy before any test runs
 if hasattr(asyncio, "WindowsSelectorEventLoopPolicy"):
@@ -60,14 +61,33 @@ async def test_db_engine():
 @pytest_asyncio.fixture
 async def test_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
     """Create a test database session and create all tables."""
-    # Create all tables using the models' metadata
-    from app.models import Base
+    # Create all tables using Alembic migrations
+    from alembic import command
+    from alembic.config import Config
+    import os
 
-    async with test_db_engine.begin() as conn:
-        # Drop all existing tables
-        await conn.run_sync(Base.metadata.drop_all)
-        # Create all tables
-        await conn.run_sync(Base.metadata.create_all)
+    # Get the path to alembic config
+    alembic_cfg_path = os.path.join(
+        os.path.dirname(__file__), "..", "alembic.ini"
+    )
+
+    # Update the alembic config to use test database
+    alembic_cfg = Config(alembic_cfg_path)
+    alembic_cfg.set_main_option(
+        "sqlalchemy.url",
+        settings.TEST_DATABASE_URL.replace("postgresql://", "postgresql+psycopg://"),
+    )
+
+    # Run migrations
+    try:
+        command.upgrade(alembic_cfg, "head")
+    except Exception as e:
+        # If migrations fail, create tables from models
+        from app.models import Base
+
+        async with test_db_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+            await conn.run_sync(Base.metadata.create_all)
 
     async_session_local = async_sessionmaker(
         test_db_engine,
@@ -131,3 +151,64 @@ async def async_client(test_db_engine) -> AsyncGenerator[AsyncClient, None]:
         transport=ASGITransport(app=app),
     ) as client:
         yield client
+
+
+@pytest_asyncio.fixture
+async def db_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
+    """Create a test database session."""
+    async_session_local = async_sessionmaker(
+        test_db_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autoflush=False,
+        autocommit=False,
+    )
+
+    # Truncate all tables before test
+    async with test_db_engine.begin() as conn:
+        result = await conn.execute(
+            text(
+                """
+                SELECT tablename FROM pg_tables
+                WHERE schemaname = 'public'
+                AND tablename NOT LIKE 'pg_%'
+                AND tablename NOT LIKE 'information_%'
+                AND tablename NOT LIKE 'alembic_%'
+            """
+            )
+        )
+        tables = [row[0] for row in result.fetchall()]
+
+        for table in tables:
+            await conn.execute(text(f"TRUNCATE TABLE {table} CASCADE"))
+
+    async with async_session_local() as session:
+        yield session
+        await session.close()
+
+
+@pytest_asyncio.fixture
+async def universe(db_session: AsyncSession) -> Universe:
+    """Create a test universe."""
+    from datetime import UTC, datetime, timedelta
+
+    universe, client_secret, control_key, base_url = Universe.create(
+        name="test-universe",
+        universe_ttl_days=30,
+    )
+    db_session.add(universe)
+    await db_session.commit()
+
+    # Update the universe object to have the secret for testing
+    universe.test_secret = client_secret
+    universe.test_control_key = control_key
+
+    return universe
+
+
+@pytest_asyncio.fixture
+async def client(async_client: AsyncClient, universe: Universe) -> AsyncClient:
+    """Create a test HTTP client with a universe pre-created."""
+    # Store universe on client for access in tests
+    async_client.universe = universe
+    return async_client

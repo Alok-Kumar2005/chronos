@@ -1,0 +1,57 @@
+# Bug B1: Ship Without Checking Capture
+# Trigger: Authorization expires (>29 days). Capture fails with 401/4xx.
+# Buggy behavior: Error is swallowed, order marked shipped anyway.
+# Fixed behavior: Error is propagated, order stays authorized.
+# Invariant: INV-1 (no shipped without completed capture), INV-7 (no swallowed errors)
+
+id: bug-b1-capture-error
+title: "Bug B1: Capture Error Swallowed on Authorization Expiry"
+description: |
+  Reproduces B1: Authorization becomes invalid after 29 days. When capture is attempted,
+  PayPal returns 401/4xx error. The buggy handler swallows the error and marks the order
+  shipped anyway. INV-1 and INV-7 fail with buggy handler, pass with reference_fix.
+
+tags:
+  - B1
+  - capture
+  - authorization
+  - expiry
+  - error-handling
+
+steps:
+  - type: snapshot
+    label: "start"
+
+  # Place order
+  - type: place_order
+    product_id: "PROD-BASIC"
+    payer_email: "customer@example.com"
+    quantity: 1
+
+  # Approve order (creates authorization with 29-day expiry)
+  - type: approve_order
+    order_id: "order-1"
+
+  # Advance clock by 30 days to expire authorization (29-day rule)
+  - type: advance
+    days: 30
+
+  # Try to ship (capture): should fail because authorization expired
+  # Buggy handler swallows error, reference_fix propagates it
+  - type: ship_order
+    order_id: "order-1"
+
+  # Snapshot to mark capture attempt
+  - type: snapshot
+    label: "after-capture-attempt"
+
+  # Check invariants
+  # INV-1 should fail: buggy handler marked order shipped but no COMPLETED capture
+  # INV-7 should fail: buggy handler swallowed 401 error
+  - type: check
+    invariant_ids:
+      - "INV-1"
+      - "INV-7"
+
+  - type: snapshot
+    label: "end"

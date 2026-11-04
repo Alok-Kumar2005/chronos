@@ -13,6 +13,9 @@ from app.db import check_database_connection
 from app.errors import PayPalError, generic_error_handler, paypal_error_handler
 from app.logging_setup import setup_logging
 
+# Import handlers to register them
+from app.twin import handlers  # noqa: F401
+
 # Set up logging first
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -60,11 +63,23 @@ def create_app() -> FastAPI:
     from app.twin.routers.oauth import router as oauth_router
     from app.twin.routers.webhooks import router as webhooks_router
     from app.twin.routers.webhook_verify import router as webhook_verify_router
+    from app.twin.routers.orders import router as orders_router
+    from app.twin.routers.payments import router as payments_router
+    from app.twin.routers.payouts import router as payouts_router
+    from app.twin.routers.payout_control import router as payout_control_router
+    from app.twin.routers.subscriptions import router as subscriptions_router
+    from app.twin.routers.subscription_control import router as subscription_control_router
 
     app.include_router(oauth_router)
     app.include_router(control_router)
     app.include_router(webhooks_router)
     app.include_router(webhook_verify_router)
+    app.include_router(orders_router)
+    app.include_router(payments_router)
+    app.include_router(payouts_router)
+    app.include_router(payout_control_router)
+    app.include_router(subscriptions_router)
+    app.include_router(subscription_control_router)
 
     # Request ID middleware
     @app.middleware("http")

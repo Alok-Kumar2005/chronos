@@ -79,3 +79,44 @@ async def get_universe_from_token(
         )
 
     return universe
+
+
+async def get_control_key(
+    x_chronos_key: Annotated[str | None, Header()] = None,
+) -> str:
+    """Extract and validate control key header."""
+    if not x_chronos_key:
+        raise PayPalError(
+            name="AUTHENTICATION_FAILURE",
+            message="Missing X-Chronos-Key header",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+    return x_chronos_key
+
+
+async def get_universe_from_control_key(
+    universe_id: str,
+    control_key: str = Depends(get_control_key),
+    session: AsyncSession = Depends(get_session),
+) -> Universe:
+    """Resolve control key to universe."""
+    result = await session.execute(
+        select(Universe).where(Universe.id == universe_id)
+    )
+    universe = result.scalar_one_or_none()
+
+    if not universe:
+        raise PayPalError(
+            name="RESOURCE_NOT_FOUND",
+            message="Universe not found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
+    if not Universe.verify_secret(control_key, universe.control_key_hash):
+        raise PayPalError(
+            name="AUTHENTICATION_FAILURE",
+            message="Invalid control key",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    return universe
