@@ -1,6 +1,7 @@
 """Pytest configuration and fixtures."""
 
 import asyncio
+import logging
 from collections.abc import AsyncGenerator
 
 import pytest
@@ -12,6 +13,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from app.config import settings
 from app.main import create_app
 from app.models import Universe
+
+logger = logging.getLogger(__name__)
 
 # Set Windows event loop policy before any test runs
 if hasattr(asyncio, "WindowsSelectorEventLoopPolicy"):
@@ -78,10 +81,17 @@ async def test_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
         settings.TEST_DATABASE_URL.replace("postgresql://", "postgresql+psycopg://"),
     )
 
-    # Run migrations
+    # Run migrations in a thread pool to avoid blocking the event loop
+    import concurrent.futures
+    loop = asyncio.get_event_loop()
     try:
-        command.upgrade(alembic_cfg, "head")
+        await loop.run_in_executor(
+            concurrent.futures.ThreadPoolExecutor(),
+            lambda: command.upgrade(alembic_cfg, "head")
+        )
+        logger.info("Alembic migrations completed")
     except Exception as e:
+        logger.warning(f"Alembic migrations failed: {e}, attempting schema creation from models")
         # If migrations fail, create tables from models
         from app.models import Base
 

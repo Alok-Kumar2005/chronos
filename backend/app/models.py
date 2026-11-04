@@ -1104,3 +1104,32 @@ class ScenarioFinding(Base):
         Index("ix_scenario_findings_run_id", "run_id"),
         Index("ix_scenario_findings_invariant_id", "invariant_id"),
     )
+
+
+
+class ChatThread(Base):
+    """A conversation thread with an AI copilot for a universe."""
+
+    __tablename__ = "chat_threads"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)  # {universe_id}:{chat_id}
+    universe_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("universes.id", ondelete="CASCADE"), nullable=False
+    )
+    chat_id: Mapped[str] = mapped_column(String(32), nullable=False)  # unique within universe
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+    )
+
+    # Relationships
+    universe: Mapped[Universe] = relationship()
+
+    __table_args__ = (
+        Index("ix_chat_threads_universe_id", "universe_id"),
+        UniqueConstraint("universe_id", "chat_id", name="uq_chat_thread_per_universe"),
+    )

@@ -41,12 +41,28 @@ async def lifespan(app: FastAPI):
         logger.error("Failed to connect to database", exc_info=e)
         raise
 
+    # Initialize LangGraph pool, checkpointer, and store
+    from app.langgraph_setup import langgraph_pool
+
+    try:
+        await langgraph_pool.initialize()
+        app.state.langgraph_pool = langgraph_pool
+    except Exception as e:
+        logger.error("Failed to initialize LangGraph pool", exc_info=e)
+        raise
+
     logger.info("Application startup complete")
 
     yield
 
     # Shutdown
     logger.info("Shutting down Chronos application")
+
+    # Close LangGraph pool
+    try:
+        await langgraph_pool.close()
+    except Exception as e:
+        logger.error("Failed to close LangGraph pool", exc_info=e)
 
 
 def create_app() -> FastAPI:
@@ -59,19 +75,21 @@ def create_app() -> FastAPI:
     )
 
     # Register routers
+    from app.twin.routers.chat import router as chat_router
     from app.twin.routers.control import router as control_router
     from app.twin.routers.oauth import router as oauth_router
-    from app.twin.routers.webhooks import router as webhooks_router
-    from app.twin.routers.webhook_verify import router as webhook_verify_router
     from app.twin.routers.orders import router as orders_router
     from app.twin.routers.payments import router as payments_router
-    from app.twin.routers.payouts import router as payouts_router
     from app.twin.routers.payout_control import router as payout_control_router
-    from app.twin.routers.subscriptions import router as subscriptions_router
+    from app.twin.routers.payouts import router as payouts_router
     from app.twin.routers.subscription_control import router as subscription_control_router
+    from app.twin.routers.subscriptions import router as subscriptions_router
+    from app.twin.routers.webhook_verify import router as webhook_verify_router
+    from app.twin.routers.webhooks import router as webhooks_router
 
     app.include_router(oauth_router)
     app.include_router(control_router)
+    app.include_router(chat_router)
     app.include_router(webhooks_router)
     app.include_router(webhook_verify_router)
     app.include_router(orders_router)

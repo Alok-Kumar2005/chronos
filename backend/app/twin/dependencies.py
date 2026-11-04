@@ -3,13 +3,42 @@
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import Depends, Header, status
+from fastapi import Depends, Header, Path, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
 from app.errors import PayPalError
 from app.models import AccessToken, Universe
+
+
+async def get_universe_from_id(
+    universe_id: Annotated[str, Path()],
+    session: AsyncSession = Depends(get_session),
+) -> Universe:
+    """
+    Resolve universe_id path parameter to universe using control key.
+
+    Raises 404 if universe not found.
+
+    Usage:
+        @app.get("/api/universes/{universe_id}/...")
+        async def example(universe: Universe = Depends(get_universe_from_id)):
+            ...
+    """
+    result = await session.execute(
+        select(Universe).where(Universe.id == universe_id)
+    )
+    universe = result.scalar_one_or_none()
+
+    if not universe:
+        raise PayPalError(
+            name="RESOURCE_NOT_FOUND",
+            message="Universe not found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
+    return universe
 
 
 async def get_universe_from_token(
