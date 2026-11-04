@@ -1,1 +1,1 @@
-# Agent prompts
+"""Agent prompts for Chronos AI workflows."""
