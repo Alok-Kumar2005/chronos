@@ -1,0 +1,32 @@
+{
+  "probe": "oauth_token",
+  "recorded_at": "2026-11-04T10:00:00Z",
+  "paypal": {
+    "status_code": 200,
+    "body": {
+      "scope": "https://api.paypal.com/v1/payments/.*",
+      "access_token": "[ACCESS_TOKEN]",
+      "token_type": "Bearer",
+      "app_id": "[ORDER_ID]",
+      "expires_in": 32400,
+      "nonce": "[UUID]"
+    },
+    "headers": {
+      "content-type": "application/json"
+    }
+  },
+  "chronos": {
+    "status_code": 200,
+    "body": {
+      "scope": "https://api.paypal.com/v1/payments/.*",
+      "access_token": "[ACCESS_TOKEN]",
+      "token_type": "Bearer",
+      "app_id": "[ORDER_ID]",
+      "expires_in": 32400,
+      "nonce": "[UUID]"
+    },
+    "headers": {
+      "content-type": "application/json"
+    }
+  }
+}

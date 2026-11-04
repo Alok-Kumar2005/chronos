@@ -82,6 +82,7 @@ def create_app() -> FastAPI:
     from app.twin.routers.payments import router as payments_router
     from app.twin.routers.payout_control import router as payout_control_router
     from app.twin.routers.payouts import router as payouts_router
+    from app.twin.routers.reality import router as reality_router
     from app.twin.routers.subscription_control import router as subscription_control_router
     from app.twin.routers.subscriptions import router as subscriptions_router
     from app.twin.routers.webhook_verify import router as webhook_verify_router
@@ -98,6 +99,7 @@ def create_app() -> FastAPI:
     app.include_router(payout_control_router)
     app.include_router(subscriptions_router)
     app.include_router(subscription_control_router)
+    app.include_router(reality_router)
 
     # Request ID middleware
     @app.middleware("http")
