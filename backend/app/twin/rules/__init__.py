@@ -1,0 +1,1 @@
+# PayPal behavior rules catalogue
