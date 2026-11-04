@@ -2,6 +2,8 @@
 
 import logging
 import secrets
+import sys
+import asyncio
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -15,6 +17,10 @@ from app.logging_setup import setup_logging
 
 # Import handlers to register them
 from app.twin import handlers  # noqa: F401
+
+# Windows event loop fix for psycopg3
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # Set up logging first
 setup_logging()
@@ -83,6 +89,7 @@ def create_app() -> FastAPI:
     from app.twin.routers.payout_control import router as payout_control_router
     from app.twin.routers.payouts import router as payouts_router
     from app.twin.routers.reality import router as reality_router
+    from app.twin.routers.scenarios import router as scenarios_router
     from app.twin.routers.subscription_control import router as subscription_control_router
     from app.twin.routers.subscriptions import router as subscriptions_router
     from app.twin.routers.webhook_verify import router as webhook_verify_router
@@ -97,9 +104,14 @@ def create_app() -> FastAPI:
     app.include_router(payments_router)
     app.include_router(payouts_router)
     app.include_router(payout_control_router)
+    app.include_router(scenarios_router)
     app.include_router(subscriptions_router)
     app.include_router(subscription_control_router)
     app.include_router(reality_router)
+
+    # Mount static UI files (must be after API routers)
+    from app.twin.routers.static import mount_static_files
+    mount_static_files(app)
 
     # Request ID middleware
     @app.middleware("http")

@@ -33,16 +33,15 @@ class LangGraphPool:
         # Create the connection pool with Neon-friendly settings
         self.pool = AsyncConnectionPool(
             db_url,
-            # Connection kwargs for Neon compatibility
-            autocommit=True,  # Let LangGraph handle transactions
-            prepare_threshold=None,  # Disable prepared statements initially
-            row_factory=dict_row,  # Return rows as dicts
+            # Connection kwargs - passed to AsyncConnection.connect()
+            kwargs={
+                "row_factory": dict_row,  # Return rows as dicts
+            },
             # Pool sizing: small since LangGraph operations are typically brief
             min_size=2,
             max_size=10,
-            # Health check for Neon scale-to-zero recovery
-            check=self._health_check,
-            check_interval=30,  # Check every 30 seconds
+            # Configure each connection after creation
+            configure=self._configure_connection,
         )
 
         logger.info(
@@ -82,14 +81,12 @@ class LangGraphPool:
             logger.info("LangGraph connection pool closed")
 
     @staticmethod
-    async def _health_check(conn: AsyncConnection) -> None:
-        """Health check for connection pool recovery from Neon scale-to-zero."""
-        try:
-            async with conn.cursor() as cur:
-                await cur.execute("SELECT 1")
-        except Exception as e:
-            logger.warning("Health check failed", exc_info=e)
-            raise
+    async def _configure_connection(conn: AsyncConnection) -> None:
+        """Configure connection settings for Neon compatibility."""
+        # Set autocommit mode - LangGraph handles transactions
+        await conn.set_autocommit(True)
+        # Disable prepared statements for Neon compatibility
+        conn.prepare_threshold = None
 
 
 # Global instance

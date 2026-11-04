@@ -168,12 +168,12 @@ class OrderService:
 
         # Emit webhook event
         await emit_event(
-            db=db,
-            universe_id=order.universe_id,
+            db,
             event_type="CHECKOUT.ORDER.APPROVED",
             resource_type="order",
             summary=f"Order {order.id} approved by payer",
             resource=OrderService._order_to_dict(order),
+            universe_id=order.universe_id,
             virtual_now=virtual_now,
         )
 
@@ -275,12 +275,12 @@ class OrderService:
 
         # Emit webhook event
         await emit_event(
-            db=db,
-            universe_id=order.universe_id,
+            db,
             event_type="PAYMENT.CAPTURE.COMPLETED",
             resource_type="capture",
             summary=f"Capture {capture.id} completed for order {order.id}",
             resource=CaptureService._capture_to_dict(capture),
+            universe_id=order.universe_id,
             virtual_now=virtual_now,
         )
 
@@ -426,12 +426,12 @@ class AuthorizationService:
 
         # Emit webhook event
         await emit_event(
-            db=db,
-            universe_id=order.universe_id,
+            db,
             event_type="PAYMENT.AUTHORIZATION.CREATED",
             resource_type="authorization",
             summary=f"Authorization {auth.id} created for order {order.id}",
             resource=AuthorizationService._authorization_to_dict(auth),
+            universe_id=order.universe_id,
             virtual_now=virtual_now,
         )
 
@@ -563,12 +563,12 @@ class AuthorizationService:
 
         # Emit webhook event
         await emit_event(
-            db=db,
-            universe_id=auth.universe_id,
+            db,
             event_type="PAYMENT.CAPTURE.COMPLETED",
             resource_type="capture",
             summary=f"Capture {capture.id} completed for authorization {auth.id}",
             resource=CaptureService._capture_to_dict(capture),
+            universe_id=auth.universe_id,
             virtual_now=virtual_now,
         )
 
@@ -595,12 +595,12 @@ class AuthorizationService:
 
         # Emit webhook event
         await emit_event(
-            db=db,
-            universe_id=auth.universe_id,
+            db,
             event_type="PAYMENT.AUTHORIZATION.VOIDED",
             resource_type="authorization",
             summary=f"Authorization {auth.id} voided",
             resource=AuthorizationService._authorization_to_dict(auth),
+            universe_id=auth.universe_id,
             virtual_now=virtual_now,
         )
 
@@ -758,12 +758,12 @@ class CaptureService:
 
         # Emit webhook event
         await emit_event(
-            db=db,
-            universe_id=capture.universe_id,
+            db,
             event_type="PAYMENT.CAPTURE.REFUNDED",
             resource_type="refund",
             summary=f"Refund {refund.id} completed for capture {capture.id}",
             resource=RefundService._refund_to_dict(refund),
+            universe_id=capture.universe_id,
             virtual_now=virtual_now,
         )
 

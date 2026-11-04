@@ -213,6 +213,18 @@ class ScenarioRunner:
         Returns:
             ScenarioRun with trace, findings, and status
         """
+        # Get universe first (before creating run) so we can reset if needed
+        result = await self.db_session.execute(
+            select(Universe).where(Universe.id == self.universe_id)
+        )
+        universe = result.scalar_one_or_none()
+        if not universe:
+            raise ValueError(f"Universe {self.universe_id} not found")
+
+        # Reset BEFORE creating the run record (so delete doesn't wipe our run)
+        if reset:
+            await self._reset_universe(universe)
+
         run = ScenarioRun(
             universe_id=self.universe_id,
             scenario_id=scenario.id,
@@ -223,17 +235,6 @@ class ScenarioRunner:
         await self.db_session.flush()
 
         try:
-            # Get universe
-            result = await self.db_session.execute(
-                select(Universe).where(Universe.id == self.universe_id)
-            )
-            universe = result.scalar_one_or_none()
-            if not universe:
-                raise ValueError(f"Universe {self.universe_id} not found")
-
-            # Reset if requested
-            if reset:
-                await self._reset_universe(universe)
 
             # Execute steps
             executor = StepExecutor(self.db_session, universe)

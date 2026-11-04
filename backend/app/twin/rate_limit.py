@@ -44,6 +44,6 @@ class RateLimiter:
 
 # Global rate limiters
 universe_creation_limiter = RateLimiter(
-    max_requests=10,  # 10 per hour
+    max_requests=100,  # 100 per hour (increased for local testing)
     window_seconds=3600,
 )

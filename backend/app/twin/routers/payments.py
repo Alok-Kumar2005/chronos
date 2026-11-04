@@ -97,7 +97,7 @@ async def capture_authorization(
                     status_code=400,
                 )
 
-        virtual_now = await now(db, universe.id)
+        virtual_now = await now(db, universe)
 
         capture = await AuthorizationService.capture_authorization(
             db=db,
@@ -141,7 +141,7 @@ async def reauthorize_authorization(
 
         auth = await AuthorizationService.get_authorization(db, universe.id, auth_id)
 
-        virtual_now = await now(db, universe.id)
+        virtual_now = await now(db, universe)
 
         if auth.honor_period_ends_virtual_at and virtual_now > auth.honor_period_ends_virtual_at:
             raise PaymentError(
@@ -200,7 +200,7 @@ async def void_authorization(
     try:
         auth = await AuthorizationService.get_authorization(db, universe.id, auth_id)
 
-        virtual_now = await now(db, universe.id)
+        virtual_now = await now(db, universe)
 
         await AuthorizationService.void_authorization(db, auth, virtual_now)
 
@@ -267,7 +267,7 @@ async def refund_capture(
                     status_code=400,
                 )
 
-        virtual_now = await now(db, universe.id)
+        virtual_now = await now(db, universe)
 
         refund = await CaptureService.refund_capture(
             db=db,

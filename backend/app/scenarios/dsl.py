@@ -163,6 +163,13 @@ class Step(BaseModel):
 
     root: StepUnion = Field(discriminator="type")
 
+    @model_validator(mode="before")
+    @classmethod
+    def wrap_root(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "root" not in data:
+            return {"root": data}
+        return data
+
     def __getattr__(self, name: str) -> Any:
         """Delegate attribute access to the underlying step."""
         return getattr(self.root, name)

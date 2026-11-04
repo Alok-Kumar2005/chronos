@@ -110,7 +110,7 @@ async def create_order(
                 status_code=400,
             )
 
-        virtual_now = await now(db, universe.id)
+        virtual_now = await now(db, universe)
 
         order = await OrderService.create_order(
             db=db,
@@ -186,7 +186,7 @@ async def approve_order(
 
         order = await OrderService.get_order(db, universe.id, order_id)
 
-        virtual_now = await now(db, universe.id)
+        virtual_now = await now(db, universe)
 
         await OrderService.approve_order(db, order, payer_id, virtual_now)
 
@@ -220,7 +220,7 @@ async def capture_order(
     try:
         order = await OrderService.get_order(db, universe.id, order_id)
 
-        virtual_now = await now(db, universe.id)
+        virtual_now = await now(db, universe)
 
         capture = await OrderService.capture_order(db, order, virtual_now)
 
@@ -260,7 +260,7 @@ async def authorize_order(
     try:
         order = await OrderService.get_order(db, universe.id, order_id)
 
-        virtual_now = await now(db, universe.id)
+        virtual_now = await now(db, universe)
 
         auth = await OrderService.authorize_order(db, order, virtual_now)
 

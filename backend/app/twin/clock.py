@@ -27,9 +27,10 @@ class ClockResponse:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dict for JSON response."""
         return {
+            "virtual_now": self.new_virtual_now.isoformat() if self.new_virtual_now else None,
+            "real_now": datetime.now(UTC).isoformat(),
             "events_processed": self.events_processed,
             "events_failed": self.events_failed,
-            "new_virtual_now": self.new_virtual_now.isoformat() if self.new_virtual_now else None,
             "failures": self.failures,
         }
 
@@ -47,7 +48,7 @@ async def advance(
     session: AsyncSession,
     universe_id: str,
     to: datetime | None = None,
-    by: dict[str, int] | None = None,
+    by: dict[str, float] | None = None,
     max_events: int = 10000,
 ) -> ClockResponse:
     """
@@ -199,7 +200,7 @@ async def advance(
                 summary=f"Handler {event.kind} failed: {error_msg}",
                 data={"error": error_msg, "event_kind": event.kind},
             )
-            await session.add(event_log_entry)
+            session.add(event_log_entry)
             await session.flush()
 
             # Commit and continue

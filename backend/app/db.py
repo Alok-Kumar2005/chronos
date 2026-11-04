@@ -3,6 +3,7 @@
 from collections.abc import AsyncGenerator
 from typing import Any
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -68,7 +69,7 @@ async def check_database_connection() -> dict[str, Any]:
         Exception if connection fails after retries
     """
     async with engine.begin() as conn:
-        result = await conn.execute("SELECT 1 as connected, version() as version")
+        result = await conn.execute(text("SELECT 1 as connected, version() as version"))
         row = result.first()
         return {
             "connected": bool(row[0]) if row else False,

@@ -21,17 +21,6 @@ if hasattr(asyncio, "WindowsSelectorEventLoopPolicy"):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
-@pytest.fixture(scope="session")
-def event_loop() -> asyncio.AbstractEventLoop:
-    """Create event loop for async tests.
-
-    On Windows, use SelectorEventLoop for psycopg3 compatibility.
-    """
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest_asyncio.fixture
 async def test_db_engine():
     """Create test database engine."""
